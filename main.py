@@ -7,28 +7,23 @@ from datetime import datetime
 from dotenv import load_dotenv
 import os
 
-# -----------------------------
-# Load Environment Variables
-# -----------------------------
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
 
-# -----------------------------
-# MongoDB Connection
-# -----------------------------
 client = MongoClient(MONGO_URI)
 db = client["student_event_db"]
 users_collection = db["users"]
 events_collection = db["events"]
 
-# -----------------------------
-# FastAPI App
-# -----------------------------
 app = FastAPI()
 
+# ✅ FIXED CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,9 +34,6 @@ def home():
     return {"message": "Student Event Management API is running"}
 
 
-# -----------------------------
-# Models
-# -----------------------------
 class UserCreate(BaseModel):
     username: str
     email: str
@@ -57,12 +49,8 @@ class EventRegister(BaseModel):
     event_id: str
 
 
-# ==============================
-# CREATE ACCOUNT
-# ==============================
 @app.post("/create-account")
 def create_account(user: UserCreate):
-
     existing_user = users_collection.find_one({
         "$or": [
             {"username": user.username},
@@ -83,12 +71,8 @@ def create_account(user: UserCreate):
     return {"message": "Account created successfully"}
 
 
-# ==============================
-# LOGIN
-# ==============================
 @app.post("/login")
 def login(user: UserLogin):
-
     db_user = users_collection.find_one({
         "$or": [
             {"username": user.login},
@@ -105,25 +89,16 @@ def login(user: UserLogin):
     }
 
 
-# ==============================
-# GET EVENTS
-# ==============================
 @app.get("/events")
 def get_events():
-
     events = list(events_collection.find())
     for event in events:
         event["_id"] = str(event["_id"])
-
     return events
 
 
-# ==============================
-# REGISTER EVENT
-# ==============================
 @app.post("/register-event/{username}")
 def register_event(username: str, event: EventRegister):
-
     user = users_collection.find_one({"username": username})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -146,12 +121,8 @@ def register_event(username: str, event: EventRegister):
     return {"message": "Event registered successfully"}
 
 
-# ==============================
-# PROFILE
-# ==============================
 @app.get("/profile/{username}")
 def get_profile(username: str):
-
     user = users_collection.find_one({"username": username})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -161,32 +132,3 @@ def get_profile(username: str):
         "email": user["email"],
         "registered_events": user["registered_events"]
     }
-
-
-# ==============================
-# INSERT DEFAULT EVENTS
-# ==============================
-@app.post("/insert-default-events")
-def insert_default_events():
-
-    if events_collection.count_documents({}) > 0:
-        return {"message": "Events already inserted"}
-
-    events = [
-        {"name": "Dance", "category": "Cultural"},
-        {"name": "Singing", "category": "Cultural"},
-        {"name": "Nukkad", "category": "Cultural"},
-        {"name": "Imagix", "category": "Technical"},
-        {"name": "Hackathon", "category": "Technical"},
-        {"name": "Invictus", "category": "Technical"},
-        {"name": "Badminton", "category": "Sports"},
-        {"name": "Cricket", "category": "Sports"},
-        {"name": "Football", "category": "Sports"},
-        {"name": "Master and Miss", "category": "Others"},
-        {"name": "Treasure Hunt", "category": "Others"},
-        {"name": "Fashion Show", "category": "Others"}
-    ]
-
-    events_collection.insert_many(events)
-
-    return {"message": "Default events inserted successfully"}
