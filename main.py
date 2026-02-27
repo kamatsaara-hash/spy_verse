@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pymongo import MongoClient
 from bson import ObjectId
@@ -24,9 +25,20 @@ events_collection = db["events"]
 # FastAPI App
 # -----------------------------
 app = FastAPI()
+
+# ✅ CORS CONFIGURATION (IMPORTANT)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace with frontend URL in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.get("/")
 def home():
     return {"message": "Student Event Management API is running"}
+
 
 # -----------------------------
 # Models
@@ -36,9 +48,11 @@ class UserCreate(BaseModel):
     email: str
     password: str
 
+
 class UserLogin(BaseModel):
     login: str  # username OR email
     password: str
+
 
 class EventRegister(BaseModel):
     event_id: str
