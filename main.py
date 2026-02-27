@@ -28,46 +28,11 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # allow frontend in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# =========================
-# STARTUP EVENT (SEED DATA)
-# =========================
-
-@app.on_event("startup")
-def seed_events():
-
-    # Only seed if empty
-    if events_collection.count_documents({}) == 0:
-
-        sample_events = [
-            # TECHNICAL (3)
-            {"name": "Hackathon", "category": "technical", "codename": "CODE-X"},
-            {"name": "AI Challenge", "category": "technical", "codename": "NEURAL-7"},
-            {"name": "Cyber Security", "category": "technical", "codename": "FIREWALL"},
-
-            # CULTURAL (3)
-            {"name": "Dance Battle", "category": "cultural", "codename": "RHYTHM"},
-            {"name": "Music Fest", "category": "cultural", "codename": "MELODY"},
-            {"name": "Drama Night", "category": "cultural", "codename": "STAGE-9"},
-
-            # SPORTS (3)
-            {"name": "Football League", "category": "sports", "codename": "GOAL-99"},
-            {"name": "Basketball Cup", "category": "sports", "codename": "DUNK-3"},
-            {"name": "Cricket Clash", "category": "sports", "codename": "SIXER"},
-
-            # OTHERS (3)
-            {"name": "Quiz Night", "category": "others", "codename": "BRAIN"},
-            {"name": "Treasure Hunt", "category": "others", "codename": "HUNTER"},
-            {"name": "Startup Pitch", "category": "others", "codename": "VISION"},
-        ]
-
-        events_collection.insert_many(sample_events)
-        print("✅ 12 events seeded successfully")
 
 # =========================
 # ROOT
@@ -76,6 +41,41 @@ def seed_events():
 @app.get("/")
 def home():
     return {"message": "Student Event Management API is running"}
+
+# =========================
+# FORCE SEED EVENTS (MANUAL)
+# =========================
+
+@app.get("/seed-events")
+def seed_events():
+
+    events_collection.delete_many({})  # clear existing
+
+    sample_events = [
+        # TECHNICAL
+        {"name": "Hackathon", "category": "technical", "codename": "CODE-X"},
+        {"name": "AI Challenge", "category": "technical", "codename": "NEURAL-7"},
+        {"name": "Cyber Security", "category": "technical", "codename": "FIREWALL"},
+
+        # CULTURAL
+        {"name": "Dance Battle", "category": "cultural", "codename": "RHYTHM"},
+        {"name": "Music Fest", "category": "cultural", "codename": "MELODY"},
+        {"name": "Drama Night", "category": "cultural", "codename": "STAGE-9"},
+
+        # SPORTS
+        {"name": "Football League", "category": "sports", "codename": "GOAL-99"},
+        {"name": "Basketball Cup", "category": "sports", "codename": "DUNK-3"},
+        {"name": "Cricket Clash", "category": "sports", "codename": "SIXER"},
+
+        # OTHERS
+        {"name": "Quiz Night", "category": "others", "codename": "BRAIN"},
+        {"name": "Treasure Hunt", "category": "others", "codename": "HUNTER"},
+        {"name": "Startup Pitch", "category": "others", "codename": "VISION"},
+    ]
+
+    events_collection.insert_many(sample_events)
+
+    return {"message": "12 events inserted successfully"}
 
 # =========================
 # MODELS
@@ -150,16 +150,15 @@ def get_events():
 
     events = list(events_collection.find())
 
-    formatted = []
-    for event in events:
-        formatted.append({
+    return [
+        {
             "_id": str(event["_id"]),
             "name": event["name"],
             "category": event["category"],
             "codename": event["codename"]
-        })
-
-    return formatted
+        }
+        for event in events
+    ]
 
 # =========================
 # REGISTER EVENT
