@@ -28,18 +28,22 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # allow frontend in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # =========================
-# AUTO SEED EVENTS
+# STARTUP EVENT (SEED DATA)
 # =========================
 
+@app.on_event("startup")
 def seed_events():
+
+    # Only seed if empty
     if events_collection.count_documents({}) == 0:
+
         sample_events = [
             # TECHNICAL (3)
             {"name": "Hackathon", "category": "technical", "codename": "CODE-X"},
@@ -63,8 +67,7 @@ def seed_events():
         ]
 
         events_collection.insert_many(sample_events)
-
-seed_events()
+        print("✅ 12 events seeded successfully")
 
 # =========================
 # ROOT
@@ -157,3 +160,48 @@ def get_events():
         })
 
     return formatted
+
+# =========================
+# REGISTER EVENT
+# =========================
+
+@app.post("/register-event/{username}")
+def register_event(username: str, event: EventRegister):
+
+    user = users_collection.find_one({"username": username})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    event_data = events_collection.find_one({"_id": ObjectId(event.event_id)})
+    if not event_data:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    registration_info = {
+        "event_name": event_data["name"],
+        "category": event_data["category"],
+        "registered_at": datetime.utcnow().isoformat()
+    }
+
+    users_collection.update_one(
+        {"username": username},
+        {"$push": {"registered_events": registration_info}}
+    )
+
+    return {"message": "Event registered successfully"}
+
+# =========================
+# PROFILE
+# =========================
+
+@app.get("/profile/{username}")
+def get_profile(username: str):
+
+    user = users_collection.find_one({"username": username})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {
+        "username": user["username"],
+        "email": user["email"],
+        "registered_events": user.get("registered_events", [])
+    }
