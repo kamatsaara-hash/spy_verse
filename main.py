@@ -11,7 +11,7 @@ load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
 
 client = MongoClient(MONGO_URI)
-db = client["student_event_db"]
+db = client["SPYDATA"]
 users_collection = db["users"]
 events_collection = db["events"]
 
