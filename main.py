@@ -26,10 +26,9 @@ events_collection = db["events"]
 # -----------------------------
 app = FastAPI()
 
-# ✅ CORS CONFIGURATION (IMPORTANT)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with frontend URL in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,7 +49,7 @@ class UserCreate(BaseModel):
 
 
 class UserLogin(BaseModel):
-    login: str  # username OR email
+    login: str
     password: str
 
 
@@ -58,9 +57,9 @@ class EventRegister(BaseModel):
     event_id: str
 
 
-# =====================================================
+# ==============================
 # CREATE ACCOUNT
-# =====================================================
+# ==============================
 @app.post("/create-account")
 def create_account(user: UserCreate):
 
@@ -84,9 +83,9 @@ def create_account(user: UserCreate):
     return {"message": "Account created successfully"}
 
 
-# =====================================================
-# LOGIN (Username OR Email)
-# =====================================================
+# ==============================
+# LOGIN
+# ==============================
 @app.post("/login")
 def login(user: UserLogin):
 
@@ -106,9 +105,9 @@ def login(user: UserLogin):
     }
 
 
-# =====================================================
-# GET ALL EVENTS (Dashboard)
-# =====================================================
+# ==============================
+# GET EVENTS
+# ==============================
 @app.get("/events")
 def get_events():
 
@@ -119,9 +118,9 @@ def get_events():
     return events
 
 
-# =====================================================
-# REGISTER FOR EVENT
-# =====================================================
+# ==============================
+# REGISTER EVENT
+# ==============================
 @app.post("/register-event/{username}")
 def register_event(username: str, event: EventRegister):
 
@@ -147,9 +146,9 @@ def register_event(username: str, event: EventRegister):
     return {"message": "Event registered successfully"}
 
 
-# =====================================================
-# PROFILE PAGE
-# =====================================================
+# ==============================
+# PROFILE
+# ==============================
 @app.get("/profile/{username}")
 def get_profile(username: str):
 
@@ -164,9 +163,9 @@ def get_profile(username: str):
     }
 
 
-# =====================================================
-# INSERT DEFAULT EVENTS (RUN ONLY ONCE)
-# =====================================================
+# ==============================
+# INSERT DEFAULT EVENTS
+# ==============================
 @app.post("/insert-default-events")
 def insert_default_events():
 
@@ -174,22 +173,15 @@ def insert_default_events():
         return {"message": "Events already inserted"}
 
     events = [
-        # Cultural
         {"name": "Dance", "category": "Cultural"},
         {"name": "Singing", "category": "Cultural"},
         {"name": "Nukkad", "category": "Cultural"},
-
-        # Technical
         {"name": "Imagix", "category": "Technical"},
         {"name": "Hackathon", "category": "Technical"},
         {"name": "Invictus", "category": "Technical"},
-
-        # Sports
         {"name": "Badminton", "category": "Sports"},
         {"name": "Cricket", "category": "Sports"},
         {"name": "Football", "category": "Sports"},
-
-        # Others
         {"name": "Master and Miss", "category": "Others"},
         {"name": "Treasure Hunt", "category": "Others"},
         {"name": "Fashion Show", "category": "Others"}
