@@ -1,4 +1,4 @@
-print("🔥 NEW VERSION DEPLOYED")
+from agent1 import EventChatbotAgent
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -22,7 +22,7 @@ users_collection = db["users"]
 events_collection = db["events"]
 
 app = FastAPI()
-
+assistant_agent = EventChatbotAgent()
 # =========================
 # CORS
 # =========================
@@ -94,6 +94,8 @@ class UserLogin(BaseModel):
 class EventRegister(BaseModel):
     event_id: str
 
+class AssistantRequest(BaseModel):
+    message: str
 # =========================
 # CREATE ACCOUNT
 # =========================
@@ -205,3 +207,19 @@ def get_profile(username: str):
         "email": user["email"],
         "registered_events": user.get("registered_events", [])
     }
+# =========================
+# AI ASSISTANT ENDPOINT
+# =========================
+
+@app.post("/assistant")
+def assistant(request: AssistantRequest):
+    try:
+        reply = assistant_agent.chat(request.message)
+
+        return {
+            "success": True,
+            "reply": reply
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
